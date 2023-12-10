@@ -63,7 +63,7 @@ conn1.close()
 
 def fetch_new_id_for_fruit(fruit_name):
     # Prepare the querystring
-    querystring = {"query": fruit_name}
+    querystring = {"query": fruit_name, "addChildren" : "false", "number" : "1"}
     # API headers - Replace with your actual headers
     headers = {
 	    "X-RapidAPI-Key": "a4cbf2e947msh1137ebac823845cp11fc10jsn7b0278f5c02f",
@@ -75,8 +75,9 @@ def fetch_new_id_for_fruit(fruit_name):
         # Extract the new ID from the response
         data = response.json()
         # Assuming the new ID is in the response, you need to adjust the path to the ID based on the actual response structure
-        new_id = data['results'][0]['id'] 
-        return new_id
+        if data['results']:
+            new_id = data['results'][0]['id'] 
+            return new_id
     return None
 
 # Function to create and populate the new table
@@ -85,11 +86,15 @@ def create_and_populate_new_table(fruit_names_with_new_ids):
     cursor = conn.cursor()
     # Create a new table
     cursor.execute('''CREATE TABLE IF NOT EXISTS NewFruitIDs (
-                        name TEXT,
+                        name TEXT UNIQUE,
                         new_id INTEGER)''')
     # Insert data
     for name, new_id in fruit_names_with_new_ids:
-        cursor.execute("INSERT INTO NewFruitIDs (name, new_id) VALUES (?, ?)", (name, new_id))
+        # Check if the fruit name already exists in the table
+        cursor.execute("SELECT name FROM NewFruitIDs WHERE name = ?", (name,))
+        if not cursor.fetchone():  # If the name does not exist, insert the new record
+            cursor.execute("INSERT INTO NewFruitIDs (name, new_id) VALUES (?, ?)", (name, new_id))
+
     conn.commit()
     conn.close()
 
@@ -154,3 +159,16 @@ create_and_populate_new_table(fruit_names_with_new_ids)
 
 
 #  https://api.edamam.com/api/food-database/v2/parser
+
+{
+  "results": [
+    {
+      "id": 9040,
+      "name": "banana",
+      "image": "bananas.jpg"
+    }
+  ],
+  "offset": 0,
+  "number": 1,
+  "totalResults": 14
+}
