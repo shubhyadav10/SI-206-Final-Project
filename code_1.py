@@ -87,7 +87,10 @@ def create_and_populate_new_table(fruit_names_with_new_ids):
     # Create a new table
     cursor.execute('''CREATE TABLE IF NOT EXISTS NewFruitIDs (
                         name TEXT UNIQUE,
-                        new_id INTEGER)''')
+                        new_id INTEGER,
+                        estimated_cost REAL)''')
+    cursor.execute('''UPDATE NewFruitIDs
+                    SET estimated_cost = 0''')
     # Insert data
     for name, new_id in fruit_names_with_new_ids:
         # Check if the fruit name already exists in the table
@@ -122,7 +125,7 @@ def update_estimated_cost(fruit_data):
     cursor = conn.cursor()
 
     # Add a new column for estimated cost if it doesn't exist
-    cursor.execute("ALTER TABLE NewFruitIDs ADD COLUMN estimated_cost REAL")
+    #cursor.execute("ALTER TABLE NewFruitIDs ADD COLUMN estimated_cost REAL")
 
     for name, new_id in fruit_data:
         query_string = {"amount": "100", "unit": "grams"}
