@@ -91,9 +91,9 @@ def create_and_populate_new_table(fruit_names_with_new_ids):
     # Insert data
     for name, new_id in fruit_names_with_new_ids:
         # Check if the fruit name already exists in the table
-        cursor.execute("SELECT name FROM NewFruitIDs WHERE name = ?", (name,))
-        if not cursor.fetchone():  # If the name does not exist, insert the new record
-            cursor.execute("INSERT INTO NewFruitIDs (name, new_id) VALUES (?, ?)", (name, new_id))
+        # cursor.execute("SELECT name FROM NewFruitIDs WHERE name = ?", (name,))
+        # if not cursor.fetchone():  # If the name does not exist, insert the new record
+        cursor.execute("INSERT OR REPLACE INTO NewFruitIDs (name, new_id) VALUES (?, ?)", (name, new_id))
 
     conn.commit()
     conn.close()
@@ -109,66 +109,54 @@ for fruit_name in fruit_names:
 
 create_and_populate_new_table(fruit_names_with_new_ids)
 
+def get_new_ids_from_db():
+    conn = sqlite3.connect('fruityvice.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT name, new_id FROM NewFruitIDs")
+    data = cursor.fetchall()
+    conn.close()
+    return data
+
+def update_estimated_cost(fruit_data):
+    conn = sqlite3.connect('fruityvice.db')
+    cursor = conn.cursor()
+
+    # Add a new column for estimated cost if it doesn't exist
+    cursor.execute("ALTER TABLE NewFruitIDs ADD COLUMN estimated_cost REAL")
+
+    for name, new_id in fruit_data:
+        query_string = {"amount": "100", "unit": "grams"}
+        headers = {
+        "X-RapidAPI-Key": "a4cbf2e947msh1137ebac823845cp11fc10jsn7b0278f5c02f",
+	    "X-RapidAPI-Host": "spoonacular-recipe-food-nutrition-v1.p.rapidapi.com"
+        }
+        response = requests.get(f"https://spoonacular-recipe-food-nutrition-v1.p.rapidapi.com/food/ingredients/{new_id}/information", headers=headers, params=query_string)
+        
+        if response.status_code == 200:
+            data = response.json()
+            estimated_cost = data.get('estimatedCost', {}).get('value', 0)
+            
+            # Update the estimated cost in the database
+            cursor.execute("UPDATE NewFruitIDs SET estimated_cost = ? WHERE new_id = ?", (estimated_cost, new_id))
+
+    conn.commit()
+    conn.close()
+
+fruit_data = get_new_ids_from_db()
+update_estimated_cost(fruit_data)
+
 
     
-    #pass the name to get id one query
-    #pass gotten id to get cost second query
-    #create table with the fruits and corresponding costs ig
-# # Create tables if they don't exist
-# cursor.execute('''CREATE TABLE IF NOT EXISTS Fruit (
-#                     id INTEGER PRIMARY KEY,
-#                     genus TEXT,
-#                     name TEXT,
-#                     family TEXT,
-#                     "order" TEXT)''')
-# cursor.execute('''CREATE TABLE IF NOT EXISTS Nutrition (
-#                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-#                     fruit_id INTEGER,
-#                     carbohydrates REAL,
-#                     protein REAL,
-#                     fat REAL,
-#                     calories INTEGER,
-#                     sugar REAL,
-#                     FOREIGN KEY(fruit_id) REFERENCES Fruit(id))''')
 
-# # Function to insert data into Fruit table
-# def insert_fruit(data):
-#     cursor.execute("INSERT OR IGNORE INTO Fruit (id, genus, name, family, 'order') VALUES (?, ?, ?, ?, ?)",
-#                    (data['id'], data['genus'], data['name'], data['family'], data['order']))
-
-# # Function to insert data into Nutrition table
-# def insert_nutrition(fruit_id, nutritions):
-#     cursor.execute("INSERT INTO Nutrition (fruit_id, carbohydrates, protein, fat, calories, sugar) VALUES (?, ?, ?, ?, ?, ?)",
-#                    (fruit_id, nutritions['carbohydrates'], nutritions['protein'], nutritions['fat'], nutritions['calories'], nutritions['sugar']))
-
-# # Fetch data from API
-# def fetch_data():
-#     response = requests.get('https://www.fruityvice.com/api/fruit/all')
-#     if response.status_code == 200:
-#         fruits = response.json()
-#         for fruit in fruits[:25]:  # Limit to 25 items
-#             insert_fruit(fruit)
-#             insert_nutrition(fruit['id'], fruit['nutritions'])
-#         conn.commit()
-
-# # Run the fetch function
-# fetch_data()
-
-# # Close the database connection
-# conn.close()
-
-
-#  https://api.edamam.com/api/food-database/v2/parser
-
-{
-  "results": [
-    {
-      "id": 9040,
-      "name": "banana",
-      "image": "bananas.jpg"
-    }
-  ],
-  "offset": 0,
-  "number": 1,
-  "totalResults": 14
-}
+# {
+#   "results": [
+#     {
+#       "id": 9040,
+#       "name": "banana",
+#       "image": "bananas.jpg"
+#     }
+#   ],
+#   "offset": 0,
+#   "number": 1,
+#   "totalResults": 14
+# }
