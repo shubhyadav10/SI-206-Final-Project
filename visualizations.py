@@ -15,12 +15,11 @@ avg_bar = {}
 # Shubh
 highest_line = {}
 lowest_line = {}
-#Aarin
+#Aaron
 total_scatter = {}
 final_expensive = {}
 final_cheap = {}
 calories_per_cent_dict = {}
-#first function for joining first api stuff, then we create a bar graph on family names and calories
 
 def write_to_file_report():
     #write contents of api1 visualizations into the text file
@@ -41,10 +40,11 @@ def write_to_file_report():
             f.write(f"{c}:{d}\n")
         f.write("\n")
         #fourth visualization for scatter plot of nutritional content
-        f.write("Nutritional content of each Fruit per 100g in terms of Carbs,Fat and Sugar content in g\n")
+        f.write("Nutritional content of each Fruit per 100g in terms of Carbs,Fat and Sugar content(g)\n")
         for k,v in total_scatter.items():
             f.write(f"{k}:{v}\n")
-        f.write("Calories Per Cent for each Fruit")
+        f.write("\n")
+        f.write("Calories Per Cent for each Fruit\n")
         for l,o in calories_per_cent_dict.items():
             f.write(f"{l}:{o}\n")
         f.write("\n") 
@@ -63,11 +63,11 @@ def avg_cal_fruit_family():
     #now we plot with families on x axis and avg calories on y axis
     families = list(avg_bar.keys())
     avg_calories = list(avg_bar.values())
-    plt.figure(figsize=(6, 5))
-    plt.barh(families, avg_calories, color='skyblue')
+    plt.figure(figsize=(10, 8))
+    plt.barh(families, avg_calories, color='purple')
     plt.ylabel('Family')
-    plt.xlabel('Average Calories')
-    plt.title('Average Calories per Fruit Family')
+    plt.xlabel('Average Calories(cal/100g)')
+    plt.title('Average Calories per Fruit Family per 100g')
     plt.tight_layout() #this is for spacing
     plt.show()
     
@@ -126,7 +126,7 @@ def macro_fruit_scatter():
     plt.plot(fruit_names, x*np.arange(len(fruit_names)) + y, color='blue')
     plt.title("Nutritonal Content of Each Fruit per 100g")
     plt.xlabel("Fruit Names")
-    plt.ylabel("Total Nutrient Value of Carbs,Fat and Sugar in g")
+    plt.ylabel("Total Nutrient Value of Carbs,Fat and Sugar(g)")
     plt.xticks(rotation=45)
     plt.tight_layout()
     plt.show()
@@ -137,63 +137,41 @@ def plot_average_calories_per_cent():
 
     # Querying the data from the database
     query = """
-        SELECT f.name, n.calories, nf.estimated_cost
-        FROM Fruit f
-        JOIN Nutrition n ON f.id = n.fruit_id
-        JOIN NewFruitIDs nf ON f.name = nf.name
+        SELECT Fruit.name, Nutrition.calories, NewFruitIDs.estimated_cost
+        FROM Fruit 
+        JOIN Nutrition ON Fruit.id = Nutrition.fruit_id
+        JOIN NewFruitIDs ON Fruit.name = NewFruitIDs.name
     """
 
-    # Reading the data into a pandas DataFrame
-    data = pd.read_sql_query(query, conn)
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    for row in rows:
+        name,calories,estimated_cost = row
+        calories_per_cent_dict[name] = calories/estimated_cost
 
-    # Calculating average calories per cent
-    data['calories_per_cent'] = data['calories'] / data['estimated_cost']
+    fruit_names = list(calories_per_cent_dict.keys())
+    fruit_cc = list(calories_per_cent_dict.values())
 
-    # Plotting the bar graph
-    plt.figure(figsize=(12, 10))
-    plt.barh(data['name'], data['calories_per_cent'], color='skyblue')
+    plt.figure(figsize=(10, 8))
+    plt.barh(fruit_names,fruit_cc, color='magenta')
     plt.xlabel('Fruit')
-    plt.ylabel('Average Calories per Cent')
+    plt.ylabel('Average Calories per Cent(cal/US Cent)')
     plt.title('Average Calories per Cent of Fruits')
+    plt.tight_layout()
     plt.show()
 
-    # cursor.execute("SELECT f.name, n.calories FROM Fruit f JOIN Nutrition n ON f.id = n.fruit_id")
-    # calories_data = cursor.fetchall()
-
-    # cursor.execute("SELECT name, estimated_cost FROM NewFruitIDs")
-    # cost_data = cursor.fetchall()
-
-    # # Close the database connection
 
 
-    # # Process the data into dictionaries
-    # calories_dict = {name: calories for name, calories in calories_data}
-    # cost_dict = {name: cost for name, cost in cost_data}
-
-    # # Calculate the average calories per cent and store in a dictionary
-    # calories_per_cent_dict = {}
-    # for name in calories_dict:
-    #     if name in cost_dict and cost_dict[name] != 0:  # Check if the fruit is in both dictionaries and cost is not zero
-    #         calories_per_cent_dict[name] = calories_dict[name] / cost_dict[name]
-
-    # # Plotting the bar graph
-    # plt.figure(figsize=(12, 10))
-    # for name in calories_per_cent_dict:
-    #     plt.barh(name, calories_per_cent_dict[name], color='skyblue')
-
-    # plt.xlabel('Fruit')
-    # plt.ylabel('Average Calories per Cent')
-    # plt.title('Average Calories per Cent for Fruits')
-    # plt.show()
+    
 
 
 
 
 
-#here, we call the three functions for 3 api's, then the fourth that writes all calulation visualizations into a text file
+#here, we call the five visualization functions, then the sixth function that writes all calulations for the visualizations into a text file
 avg_cal_fruit_family()
 highest_cost_graph()
 lowest_cost_grapth()
 macro_fruit_scatter()
-write_to_file_report()
 plot_average_calories_per_cent()
+write_to_file_report()
