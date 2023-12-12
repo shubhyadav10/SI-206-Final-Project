@@ -19,6 +19,7 @@ lowest_line = {}
 total_scatter = {}
 final_expensive = {}
 final_cheap = {}
+calories_per_cent_dict = {}
 #first function for joining first api stuff, then we create a bar graph on family names and calories
 
 def write_to_file_report():
@@ -43,6 +44,10 @@ def write_to_file_report():
         f.write("Nutritional content of each Fruit per 100g in terms of Carbs,Fat and Sugar content in g\n")
         for k,v in total_scatter.items():
             f.write(f"{k}:{v}\n")
+        f.write("Calories Per Cent for each Fruit")
+        for l,o in calories_per_cent_dict.items():
+            f.write(f"{l}:{o}\n")
+        f.write("\n") 
     
 def avg_cal_fruit_family():
     #we join our two api1 tables by the common integer fruit id
@@ -127,18 +132,59 @@ def macro_fruit_scatter():
     plt.show()
    
 
-# def plot_average_calories_per_cent():
-#     query = """
-#         SELECT f.name, n.calories, nf.estimated_cost
-#         FROM Fruit f
-#         JOIN Nutrition n ON f.id = n.fruit_id
-#         JOIN NewFruitIDs nf ON f.name = nf.name
-#     """
+def plot_average_calories_per_cent():
 
 
+    # Querying the data from the database
+    query = """
+        SELECT f.name, n.calories, nf.estimated_cost
+        FROM Fruit f
+        JOIN Nutrition n ON f.id = n.fruit_id
+        JOIN NewFruitIDs nf ON f.name = nf.name
+    """
+
+    # Reading the data into a pandas DataFrame
+    data = pd.read_sql_query(query, conn)
+
+    # Calculating average calories per cent
+    data['calories_per_cent'] = data['calories'] / data['estimated_cost']
+
+    # Plotting the bar graph
+    plt.figure(figsize=(12, 10))
+    plt.barh(data['name'], data['calories_per_cent'], color='skyblue')
+    plt.xlabel('Fruit')
+    plt.ylabel('Average Calories per Cent')
+    plt.title('Average Calories per Cent of Fruits')
+    plt.show()
+
+    # cursor.execute("SELECT f.name, n.calories FROM Fruit f JOIN Nutrition n ON f.id = n.fruit_id")
+    # calories_data = cursor.fetchall()
+
+    # cursor.execute("SELECT name, estimated_cost FROM NewFruitIDs")
+    # cost_data = cursor.fetchall()
+
+    # # Close the database connection
 
 
+    # # Process the data into dictionaries
+    # calories_dict = {name: calories for name, calories in calories_data}
+    # cost_dict = {name: cost for name, cost in cost_data}
 
+    # # Calculate the average calories per cent and store in a dictionary
+    # calories_per_cent_dict = {}
+    # for name in calories_dict:
+    #     if name in cost_dict and cost_dict[name] != 0:  # Check if the fruit is in both dictionaries and cost is not zero
+    #         calories_per_cent_dict[name] = calories_dict[name] / cost_dict[name]
+
+    # # Plotting the bar graph
+    # plt.figure(figsize=(12, 10))
+    # for name in calories_per_cent_dict:
+    #     plt.barh(name, calories_per_cent_dict[name], color='skyblue')
+
+    # plt.xlabel('Fruit')
+    # plt.ylabel('Average Calories per Cent')
+    # plt.title('Average Calories per Cent for Fruits')
+    # plt.show()
 
 
 
@@ -150,3 +196,4 @@ highest_cost_graph()
 lowest_cost_grapth()
 macro_fruit_scatter()
 write_to_file_report()
+plot_average_calories_per_cent()

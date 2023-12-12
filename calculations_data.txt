@@ -75,3 +75,4 @@ Cherry:28.900000000000002
 Melon:16.3
 Papaya:18.900000000000002
 Lime:12.499999999999998
+Calories Per Cent for each Fruit
